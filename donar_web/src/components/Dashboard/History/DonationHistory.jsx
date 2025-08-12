@@ -1,64 +1,48 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, MapPin, Droplets, Package, CheckCircle, XCircle } from 'lucide-react';
 import './DonationHistory.css';
 
-const donations = [
-  {
-    date: "07-12-2025",
-    location: "City General Hospital",
-    bloodGroup: "O+",
-    units: 1,
-    status: "Completed",
-  },
-  {
-    date: "05-03-2023",
-    location: "Red Cross Blood Bank",
-    bloodGroup: "O+",
-    units: 1,
-    status: "Completed",
-  },
-  {
-    date: "18-06-2022",
-    location: "Springfield Medical Center",
-    bloodGroup: "O+",
-    units: 1,
-    status: "Completed",
-  },
-  {
-    date: "11-12-2024",
-    location: "Greenwood Hospital",
-    bloodGroup: "O+",
-    units: 1,
-    status: "Completed",
-  },
-];
 
-function DonationHistory() {
+
+function DonationHistory({ user }) {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [donations, setDonations] = useState([]);
+  const [totalDonations, setTotalDonations] = useState(0);
+  const [totalUnits, setTotalUnits] = useState(0);
+
+  useEffect(() => {
+    // Prefer donor_id from user prop, fallback to localStorage for backward compatibility
+    const donor_id = user?.donor_id || localStorage.getItem('donor_id');
+    if (donor_id) {
+      fetch(`http://localhost:5000/api/donation-history/${donor_id}`)
+        .then(res => res.json())
+        .then(data => {
+          setDonations(data.donations || []);
+          setTotalDonations(data.total_donations || 0);
+          setTotalUnits(data.total_units || 0);
+        });
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
     };
-    
     window.addEventListener('mousemove', handleMouseMove);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
   const formatDate = (dateString) => {
-    // Handle DD-MM-YYYY format
+    if (!dateString) return '-';
     const parts = dateString.split('-');
     if (parts.length === 3) {
-      // Convert DD-MM-YYYY to MM-DD-YYYY for proper Date parsing
       const day = parts[0];
       const month = parts[1];
       const year = parts[2];
       const date = new Date(`${month}-${day}-${year}`);
-      
-      // Check if date is valid
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString('en-US', {
           year: 'numeric',
@@ -67,9 +51,7 @@ function DonationHistory() {
         });
       }
     }
-    
-    // Fallback for invalid dates
-    return 'Invalid Date';
+    return dateString;
   };
 
   return (
@@ -121,11 +103,11 @@ function DonationHistory() {
               </div>
               <div className="summary-stats">
                 <div className="summary-item">
-                  <div className="summary-number">{donations.length}</div>
+                  <div className="summary-number">{totalDonations}</div>
                   <div className="summary-label">Total Donations</div>
                 </div>
                 <div className="summary-item">
-                  <div className="summary-number">{donations.reduce((sum, d) => sum + d.units, 0)}</div>
+                  <div className="summary-number">{totalUnits}</div>
                   <div className="summary-label">Total Units</div>
                 </div>
               </div>
@@ -175,11 +157,11 @@ function DonationHistory() {
                         <td className="date-cell">{formatDate(donation.date)}</td>
                         <td className="location-cell">{donation.location}</td>
                         <td className="blood-cell">
-                          <span className="blood-badge">{donation.bloodGroup}</span>
+                          <span className="blood-badge">{donation.blood_group}</span>
                         </td>
                         <td className="units-cell">{donation.units}</td>
                         <td className="status-cell">
-                          <span className={`status-badge ${donation.status.toLowerCase()}`}>
+                          <span className={`status-badge ${donation.status?.toLowerCase()}`}> 
                             {donation.status === "Completed" ? (
                               <CheckCircle className="status-icon" />
                             ) : (
@@ -203,7 +185,7 @@ function DonationHistory() {
                         <Calendar className="mobile-icon" />
                         {formatDate(donation.date)}
                       </div>
-                      <span className={`status-badge ${donation.status.toLowerCase()}`}>
+                      <span className={`status-badge ${donation.status?.toLowerCase()}`}>
                         {donation.status === "Completed" ? (
                           <CheckCircle className="status-icon" />
                         ) : (
@@ -221,7 +203,7 @@ function DonationHistory() {
                       <div className="mobile-info-row">
                         <Droplets className="mobile-icon" />
                         <span className="mobile-label">Blood Group:</span>
-                        <span className="blood-badge">{donation.bloodGroup}</span>
+                        <span className="blood-badge">{donation.blood_group}</span>
                       </div>
                       <div className="mobile-info-row">
                         <Package className="mobile-icon" />

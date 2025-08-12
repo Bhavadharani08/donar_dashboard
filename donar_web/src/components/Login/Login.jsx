@@ -134,15 +134,35 @@ const Login = ({ onLogin }) => {
 export default Login;*/
 
 
-// Test Login.jsx - Replace your current Login.jsx with this temporarily
-import React from 'react';
+import React, { useState } from 'react';
 
 const Login = ({ onLogin }) => {
-  const handleSubmit = (e) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login form submitted!");
-    // Mock login
-    onLogin({ name: 'Test User', email: 'test@test.com' });
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('http://localhost:5000/api/donor/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Login failed');
+        setLoading(false);
+        return;
+      }
+  onLogin(data);
+    } catch (err) {
+      setError('Network error');
+    }
+    setLoading(false);
   };
 
   return (
@@ -160,12 +180,14 @@ const Login = ({ onLogin }) => {
         width: '400px',
         textAlign: 'center'
       }}>
-  <h1>🩸 VitaDrop Login</h1>
-        
+        <h1>🩸 VitaDrop Login</h1>
         <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
           <input 
             type="email" 
             placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
             style={{ 
               width: '100%', 
               padding: '15px', 
@@ -179,6 +201,9 @@ const Login = ({ onLogin }) => {
           <input 
             type="password" 
             placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
             style={{ 
               width: '100%', 
               padding: '15px', 
@@ -189,8 +214,10 @@ const Login = ({ onLogin }) => {
               boxSizing: 'border-box'
             }}
           />
+          {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
           <button 
             type="submit"
+            disabled={loading}
             style={{ 
               width: '100%', 
               padding: '15px', 
@@ -203,7 +230,7 @@ const Login = ({ onLogin }) => {
               cursor: 'pointer'
             }}
           >
-            Login Test
+            {loading ? 'Signing In...' : 'Login'}
           </button>
         </form>
       </div>

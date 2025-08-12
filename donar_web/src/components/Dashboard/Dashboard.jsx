@@ -8,88 +8,20 @@ import Notifications from '../Dashboard/Notifications/Notifications';
 import Chatbot from '../Chatbot/Chatbot';
 import './Dashboard.css';
 
+
 const Dashboard = ({ user, onLogout }) => {
   const [currentView, setCurrentView] = useState('overview');
   const [showHospitalAddress, setShowHospitalAddress] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
 
-
-
-  // Donor Information Card
-  const DonorInfo = () => (
-    <div className="donor-info-card" style={{background:'#fff',padding:24,borderRadius:12,boxShadow:'0 2px 8px #0001',marginBottom:24,maxWidth:600}}>
-      <h2>🧑 Donor Information</h2>
-      <div><strong>Full Name:</strong> {user?.name || '-'}</div>
-      <div><strong>Age / DOB:</strong> {user?.age ? user.age : (user?.dob || '-')}</div>
-      <div><strong>Gender:</strong> {user?.gender || '-'}</div>
-      <div><strong>Blood Group:</strong> {user?.bloodType || '-'}</div>
-      <div><strong>Contact Number:</strong> {user?.contact || '-'}</div>
-      <div><strong>Email Address:</strong> {user?.email || '-'}</div>
-      <div><strong>Address / Location:</strong> {user?.address || '-'}</div>
-    </div>
-  );
-
-  // Donation History Table
-  const donationHistory = user?.donationHistory || [
-    {
-      date: '2024-04-10',
-      hospital: 'City General Hospital',
-      location: 'Chennai',
-      ago: '3 months ago'
-    },
-    {
-      date: '2023-12-15',
-      hospital: 'Red Cross Blood Bank',
-      location: 'Bangalore',
-      ago: '7 months ago'
+  useEffect(() => {
+    const donor_id = user?.donor_id || localStorage.getItem('donor_id');
+    if (donor_id) {
+      fetch(`http://localhost:5000/api/dashboard/${donor_id}`)
+        .then(res => res.json())
+        .then(data => setDashboardData(data));
     }
-  ];
-
-  const DonationHistoryTable = () => (
-    <div className="donation-history-table" style={{background:'#fff',padding:24,borderRadius:12,boxShadow:'0 2px 8px #0001',maxWidth:800}}>
-      <h2>🩸 Donation History</h2>
-      <table style={{width:'100%',borderCollapse:'collapse'}}>
-        <thead>
-          <tr style={{background:'#f3f4f6'}}>
-            <th style={{padding:8}}>Date</th>
-            <th style={{padding:8}}>Hospital / Blood Bank</th>
-            <th style={{padding:8}}>Location</th>
-            <th style={{padding:8}}>Time Since</th>
-          </tr>
-        </thead>
-        <tbody>
-          {donationHistory.map((d, i) => (
-            <tr key={i} style={{borderBottom:'1px solid #eee'}}>
-              <td style={{padding:8}}>{d.date}</td>
-              <td style={{padding:8}}>{d.hospital}</td>
-              <td style={{padding:8}}>{d.location}</td>
-              <td style={{padding:8}}>{d.ago}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
-  // Dashboard Overview Component
-  // Calculate next eligible date (90 days after last donation)
-  let nextEligibleDate = '-';
-  let lastDonationDate = user?.lastDonation || '13-05-2023';
-  if (lastDonationDate) {
-    // Parse date in DD-MM-YYYY or YYYY-MM-DD
-    let parts = lastDonationDate.includes('-') && lastDonationDate.split('-');
-    let dateObj;
-    if (parts && parts[2]?.length === 4) {
-      // DD-MM-YYYY
-      dateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-    } else if (parts && parts[0]?.length === 4) {
-      // YYYY-MM-DD
-      dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-    }
-    if (dateObj && !isNaN(dateObj)) {
-      dateObj.setDate(dateObj.getDate() + 90);
-      nextEligibleDate = dateObj.toLocaleDateString();
-    }
-  }
+  }, [user]);
 
   const DashboardOverview = () => (
     <div className="dashboard-overview" style={{maxWidth:800,margin:'0 auto',padding:'32px 0'}}>
@@ -97,19 +29,19 @@ const Dashboard = ({ user, onLogout }) => {
       <div style={{background:'#fff',padding:24,borderRadius:12,boxShadow:'0 2px 8px #0001',marginBottom:24,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div>
           <h2>🩸 Blood Group</h2>
-          <div style={{fontSize:28,fontWeight:'bold'}}>{user?.bloodType || 'O+'}</div>
+          <div style={{fontSize:28,fontWeight:'bold'}}>{dashboardData?.blood_group || '-'}</div>
         </div>
         <div>
           <h2>🏆 Total Donations</h2>
-          <div style={{fontSize:28,fontWeight:'bold'}}>{user?.totalDonations || 4}</div>
+          <div style={{fontSize:28,fontWeight:'bold'}}>{dashboardData?.total_donations || '-'}</div>
         </div>
       </div>
 
       {/* Donation Details */}
       <div style={{background:'#fff',padding:24,borderRadius:12,boxShadow:'0 2px 8px #0001',marginBottom:24}}>
         <h2>📋 Donation Details</h2>
-        <div><strong>Last Donation:</strong> {lastDonationDate}</div>
-        <div><strong>Next Eligible Date:</strong> {nextEligibleDate}</div>
+        <div><strong>Last Donation:</strong> {dashboardData?.last_donation_date || '-'}</div>
+        <div><strong>Next Eligible Date:</strong> {dashboardData?.next_eligible_date || '-'}</div>
       </div>
 
       {/* Urgent Requests */}

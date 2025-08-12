@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const OpenAI = require("openai");
 
 const app = express();
-const PORT = 5000;
+const PORT = 5001;
 
 const AZURE_API_KEY = process.env.GITHUB_TOKEN;
 const MODEL_NAME = "gpt-4.1-mini";
